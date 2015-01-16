@@ -42,6 +42,14 @@ To set up the serial port for use, the following has to be done:
 		
 The above instructions copied from http://www.hobbytronics.co.uk/raspberry-pi-serial-port
 
+Current status 1/16/15
+This is the same day that I put power on the device, which I connected yesterday afternoon. Using the above directions, I am able to communicate with the reader, although I can't sense/read cards.  The problem may be 1 of 2 things:
+	1. The transponder card frequency is 125 kHz while the reader is running at 136.5 kHz. This can be fixed 		with an external capacitor.
+	
+	2. The card may be blank
+
+Once I add the capacitor, i'll try the FDX-B/HDX protocol.  I also need to study the exact communication sequence with the card.
+	
 
 	
 	
