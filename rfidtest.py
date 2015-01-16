@@ -43,7 +43,6 @@ def sendCommand(command):
 
 def main():
 	# Open serial port
-	# serialPort = Serial("/dev/ttyAMA0", 9600, timeout=2)
 	if (serialPort.isOpen() == False):
 		serialPort.open()
 		
@@ -54,6 +53,20 @@ def main():
 	# Start with a clean toilet
 	serialPort.flushInput()
 	serialPort.flushOutput()
+
+	while (True):
+		#clear = lambda : os.system('clear')
+		print "Commands"
+		print "(1)  Report Version number"
+		print "(2)  Measure Operating Frequency"
+		print "(99) Exit"
+		command = input("Enter command: ")
+		
+		if int(command) == 99:
+			serialPort.close()
+			exit(0)
+	
+
 
 	# ********************************************************	
 	# Let's ask the version number - a carriage return (\r) is 
