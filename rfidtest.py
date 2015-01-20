@@ -157,15 +157,16 @@ def main():
 			# Create a sub-window for the tag type
 			sub_cornerX = 18
 			sub_cornerY = 13
-			sub_height = 5
+			sub_height = 7
 			sub_width = 20
 			subwin = curses.newwin(sub_height, sub_width, sub_cornerY, \
 				sub_cornerX)
-			subwin.addstr(0,0, "(1) - EM4100")
-			subwin.addstr(1,0, "(2) - T55xx")
-			subwin.addstr(2,0, "(3) - FDX-B/HDX")
-			subwin.addstr(3,0, "(4) - TIRIS")
-			subwin.addstr(4,0, "(5) - EM4205")
+			subwin.box()	# put a box around the window
+			subwin.addstr(1,1, "(1) - EM4100")
+			subwin.addstr(2,1, "(2) - T55xx")
+			subwin.addstr(3,1, "(3) - FDX-B/HDX")
+			subwin.addstr(4,1, "(4) - TIRIS")
+			subwin.addstr(5,1, "(5) - EM4205")
 			subwin.refresh()
 
 			# This selection is for the tag type subwindow
@@ -223,17 +224,18 @@ def main():
 			# Create a sub-window for the tag type
 			sub_cornerX = 18
 			sub_cornerY = 13
-			sub_height = 8
+			sub_height = 9
 			sub_width = 25
 			subwin = curses.newwin(sub_height, sub_width, sub_cornerY, \
 				sub_cornerX)
-			subwin.addstr(0,0, "(1) - Page 0, Block 1")
-			subwin.addstr(1,0, "(2) - Page 0, Block 2")
-			subwin.addstr(2,0, "(3) - Page 0, Block 3")
-			subwin.addstr(3,0, "(4) - Page 0, Block 4")
-			subwin.addstr(4,0, "(5) - Page 0, Block 5")
-			subwin.addstr(5,0, "(6) - Page 0, Block 6")
-			subwin.addstr(6,0, "(7) - Page 0, Block 7")
+			subwin.box()	# put a box around the window
+			subwin.addstr(1,1, "(1) - Page 0, Block 1")
+			subwin.addstr(2,1, "(2) - Page 0, Block 2")
+			subwin.addstr(3,1, "(3) - Page 0, Block 3")
+			subwin.addstr(4,1, "(4) - Page 0, Block 4")
+			subwin.addstr(5,1, "(5) - Page 0, Block 5")
+			subwin.addstr(6,1, "(6) - Page 0, Block 6")
+			subwin.addstr(7,1, "(7) - Page 0, Block 7")
 			subwin.refresh()
 
 			# This selection is for the tag type subwindow
@@ -292,17 +294,18 @@ def main():
 			# Create a sub-window for the tag type
 			sub_cornerX = 18
 			sub_cornerY = 13
-			sub_height = 8
+			sub_height = 9
 			sub_width = 25
 			subwin = curses.newwin(sub_height, sub_width, sub_cornerY, \
 				sub_cornerX)
-			subwin.addstr(0,0, "(1) - Page 0, Block 1")
-			subwin.addstr(1,0, "(2) - Page 0, Block 2")
-			subwin.addstr(2,0, "(3) - Page 0, Block 3")
-			subwin.addstr(3,0, "(4) - Page 0, Block 4")
-			subwin.addstr(4,0, "(5) - Page 0, Block 5")
-			subwin.addstr(5,0, "(6) - Page 0, Block 6")
-			subwin.addstr(6,0, "(7) - Page 0, Block 7")
+			subwin.box()	# put a box around the window
+			subwin.addstr(1,1, "(1) - Page 0, Block 1")
+			subwin.addstr(2,1, "(2) - Page 0, Block 2")
+			subwin.addstr(3,1, "(3) - Page 0, Block 3")
+			subwin.addstr(4,1, "(4) - Page 0, Block 4")
+			subwin.addstr(5,1, "(5) - Page 0, Block 5")
+			subwin.addstr(6,1, "(6) - Page 0, Block 6")
+			subwin.addstr(7,1, "(7) - Page 0, Block 7")
 			subwin.refresh()
 
 			# This selection is for the tag type subwindow

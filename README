@@ -102,4 +102,8 @@ Page 1, block 2 - 32-bit trace data
 
 Each block is decoded as 8 characters of ASCII data.
 
-Need to handle the ?0 case (command not understood), ?1, and ?2
+Need to handle the ?0 case (command not understood), ?1, and ?2.
+
+After setting type of card (T55xx), using minicom I can pass cards by
+and I will get new data each time a new card is read.  Need to define
+exact requirements for card to auto read after powerup.
