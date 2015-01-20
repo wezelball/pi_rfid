@@ -25,6 +25,7 @@
 # This application does not need root priveldges to run
 
 # pyserial
+import sys, os
 from serial import Serial
 import time
 import curses
@@ -36,6 +37,9 @@ serialPort = Serial("/dev/ttyAMA0", 9600, timeout=2)
 stdscr = curses.initscr()	# initialize display
 curses.noecho()				# don't echo keys
 curses.cbreak()				# no CR required
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 def sendCommand(command):
 	"""
@@ -60,12 +64,47 @@ def getOut():
 	curses.endwin()
 	exit(0)
 
+def initLogging(filename):
+	# remove the file if it exists
+	try:
+		os.remove(filename)
+	except OSError:
+		pass
+    	
+	global logger
+	if logger == None:
+		logger = logging.getLogger()
+	else:  # wish there was a logger.close()
+		for handler in logger.handlers[:]:  # make a copy of the list
+			logger.removeHandler(handler)
+
+	logger.setLevel(logging.DEBUG)
+	formatter = logging.Formatter(fmt='%(asctime)s: %(message)s', datefmt='%I:%M:%S')
+
+	fh = logging.FileHandler(filename)
+	fh.setFormatter(formatter)
+	logger.addHandler(fh)
+
+
+class WindowMaker:
+	def __init__(self):
+		logging.debug ("Entered WindowMaker constructor")
+		self.menu = []
+
+	def showWindow(menu):
+		logging.debug ("Entered WindowMaker showWindow method")
+
+		
+	def __del__(self):
+		logging.debug ("Entered WindowMaker destructor")
+
 def main():
 
 	# Set up logging to file
-	logging.basicConfig(filename = 'debug.log', level=logging.DEBUG)
-	logging.debug("Starting application")
+	#logging.basicConfig(filename = 'debug.log', level=logging.DEBUG)
+	#logging.debug("Starting application")
 
+	initLogging('debug.log')
 
 	# Open serial port
 	if (serialPort.isOpen() == False):
@@ -371,7 +410,7 @@ def main():
 		# Force screen update NOW
 		stdscr.refresh()
 		# logging can be very useful
-		logging.debug("Data written to  reader: %s", outStr)
+		logging.debug("Data written to reader: %s", outStr)
 		inStr = sendCommand(outStr)
 		logging.debug("Data read from reader: %s", inStr)
 		# Need to check here and modify screenData based on
