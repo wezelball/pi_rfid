@@ -38,6 +38,7 @@ stdscr = curses.initscr()	# initialize display
 curses.noecho()				# don't echo keys
 curses.cbreak()				# no CR required
 
+# Set up logging
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
@@ -65,6 +66,11 @@ def getOut():
 	exit(0)
 
 def initLogging(filename):
+	"""
+	Python's level-based logging system is initialized here. A debug.log
+	file is created anew each time application is run.
+	"""
+	
 	# remove the file if it exists
 	try:
 		os.remove(filename)
@@ -79,7 +85,8 @@ def initLogging(filename):
 			logger.removeHandler(handler)
 
 	logger.setLevel(logging.DEBUG)
-	formatter = logging.Formatter(fmt='%(asctime)s: %(message)s', datefmt='%I:%M:%S')
+	formatter = logging.Formatter(fmt='%(asctime)s: %(message)s', \
+		datefmt='%I:%M:%S')
 
 	fh = logging.FileHandler(filename)
 	fh.setFormatter(formatter)
@@ -87,22 +94,61 @@ def initLogging(filename):
 
 
 class WindowMaker:
+	"""
+	Draws a menu window with a nice box around it. Accepts a list
+	of strings, each element is a line of a menu.  The window and
+	box are drawn parametrically to be of proper size and centered
+	on screen, based on max length of menu items and number of
+	lines in menu
+	"""
 	def __init__(self):
-		logging.debug ("Entered WindowMaker constructor")
+		global stdscr	# we need to get parent information from this
 		self.menu = []
+		self.__cornerX = 0
+		self.__cornerY = 0
+		self.__height = 0
+		self.__width = 0
+		self.__maxLen = 0
+		self.__loop = 1
 
-	def showWindow(menu):
-		logging.debug ("Entered WindowMaker showWindow method")
+	def showWindow(self,menu):
+		self.__menu = menu
+		# Iterate through the items in the menu list, and find
+		# max. length of menu line and number of elements in list
+		# this will allow proper sizing of the window
+		for self.__line in self.__menu:
+			self.__lineLen = len(self.__line)
+			if self.__maxLen < self.__lineLen:
+				self.__maxLen = self.__lineLen
+		# Now the size of the window is known
+		# add 2 to allow room for the nice border
+		self.__width = self.__maxLen + 2
+		# returns nbr of elements
+		self.__height = self.__menu.__len__() + 2	
 
+		# Calculate corner X and Y to place box in center
+		# of screen
+		self.__parentHeight = stdscr.getmaxyx()[0]
+		self.__parentWidth = stdscr.getmaxyx()[1]
+		self.__cornerX = (self.__parentWidth - self.__width)/2
+		self.__cornerY = (self.__parentHeight - self.__height)/2
+		
+		# Draw the window
+		self.__subwin = curses.newwin(self.__height, self.__width, \
+			self.__cornerY, self.__cornerX)
+		self.__subwin.box()
+		for self.__line in self.__menu:
+			self.__subwin.addstr(self.__loop, 1, self.__line)
+			self.__loop += 1
+			
+		self.__subwin.refresh()
 		
 	def __del__(self):
-		logging.debug ("Entered WindowMaker destructor")
+		# refresh the main window
+		stdscr.touchwin()
+		stdscr.refresh()
 
 def main():
-
-	# Set up logging to file
-	#logging.basicConfig(filename = 'debug.log', level=logging.DEBUG)
-	#logging.debug("Starting application")
 
 	initLogging('debug.log')
 
@@ -154,13 +200,13 @@ def main():
 				61: "RB5\r",	# read block 5 (8 ASCII hex bytes)
 				62: "RB6\r",	# read block 6 (8 ASCII hex bytes)
 				63: "RB7\r",	# read block 7 (8 ASCII hex bytes)
-				64: "WB1",	# write block 1 (8 ASCII hex bytes)
-				65: "WB2",	# write block 2 (8 ASCII hex bytes)
-				66: "WB3",	# write block 3 (8 ASCII hex bytes)
-				67: "WB4",	# write block 4 (8 ASCII hex bytes)
-				68: "WB5",	# write block 5 (8 ASCII hex bytes)
-				69: "WB6",	# write block 6 (8 ASCII hex bytes)
-				70: "WB7",	# write block 7 (8 ASCII hex bytes)
+				64: "WB1",		# write block 1 (8 ASCII hex bytes)
+				65: "WB2",		# write block 2 (8 ASCII hex bytes)
+				66: "WB3",		# write block 3 (8 ASCII hex bytes)
+				67: "WB4",		# write block 4 (8 ASCII hex bytes)
+				68: "WB5",		# write block 5 (8 ASCII hex bytes)
+				69: "WB6",		# write block 6 (8 ASCII hex bytes)
+				70: "WB7",		# write block 7 (8 ASCII hex bytes)
 				}
 
 	while (True):
@@ -192,21 +238,20 @@ def main():
 		elif c == ord('3'):	# set tag type, requires subwindow menu
 			locx = 50
 			locy = 5
-			
-			# Create a sub-window for the tag type
-			sub_cornerX = 18
-			sub_cornerY = 13
-			sub_height = 7
-			sub_width = 20
-			subwin = curses.newwin(sub_height, sub_width, sub_cornerY, \
-				sub_cornerX)
-			subwin.box()	# put a box around the window
-			subwin.addstr(1,1, "(1) - EM4100")
-			subwin.addstr(2,1, "(2) - T55xx")
-			subwin.addstr(3,1, "(3) - FDX-B/HDX")
-			subwin.addstr(4,1, "(4) - TIRIS")
-			subwin.addstr(5,1, "(5) - EM4205")
-			subwin.refresh()
+		
+			# Define menu list
+			aMenu = [
+					"(1) - EM4100", 
+					"(2) - T55xx",
+					"(3) - FDX-B/HDX",
+					"(4) - TIRIS",
+					"(5) - EM4205"
+					]
+					
+			# Instantiate a class of WindowMaker to draw
+			# menu window
+			subWindow = WindowMaker()
+			subWindow.showWindow(aMenu)
 
 			# This selection is for the tag type subwindow
 			# Note the that the screenData length is 9 characters,
@@ -217,33 +262,23 @@ def main():
 			if c == ord('1'):
 				command = 52
 				screenData = "EM4100   "
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('2'):
 				command = 53
 				screenData = "T55xx    "
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('3'):
 				command = 54
 				screenData = "FDX-B/HDX"
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('4'):
 				command = 55
 				screenData = "TIRIS    "
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('5'):
 				command = 56
 				screenData = "EM4205   "
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 				
 		elif c == ord('4'):	# locate transponder
 			command = 4
@@ -260,22 +295,21 @@ def main():
 			locx = 50
 			locy = 8
 			
-			# Create a sub-window for the tag type
-			sub_cornerX = 18
-			sub_cornerY = 13
-			sub_height = 9
-			sub_width = 25
-			subwin = curses.newwin(sub_height, sub_width, sub_cornerY, \
-				sub_cornerX)
-			subwin.box()	# put a box around the window
-			subwin.addstr(1,1, "(1) - Page 0, Block 1")
-			subwin.addstr(2,1, "(2) - Page 0, Block 2")
-			subwin.addstr(3,1, "(3) - Page 0, Block 3")
-			subwin.addstr(4,1, "(4) - Page 0, Block 4")
-			subwin.addstr(5,1, "(5) - Page 0, Block 5")
-			subwin.addstr(6,1, "(6) - Page 0, Block 6")
-			subwin.addstr(7,1, "(7) - Page 0, Block 7")
-			subwin.refresh()
+			# Define menu list
+			aMenu = [
+					"(1) - Page 0, Block 1", 
+					"(2) - Page 0, Block 2",
+					"(3) - Page 0, Block 3",
+					"(4) - Page 0, Block 4",
+					"(5) - Page 0, Block 5",
+					"(6) - Page 0, Block 6",
+					"(7) - Page 0, Block 7"
+					]
+					
+			# Instantiate a class of WindowMaker to draw
+			# menu window
+			subWindow = WindowMaker()
+			subWindow.showWindow(aMenu)
 
 			# This selection is for the tag type subwindow
 			# Note the that the screenData length is 9 characters,
@@ -286,66 +320,51 @@ def main():
 			if c == ord('1'):	# page 0, block 1
 				command = 57
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('2'):	# page 0, block 2
 				command = 58
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('3'):	# page 0, block 3
 				command = 59
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('4'):	# page 0, block 4
 				command = 60
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('5'):	# page 0, block 5
 				command = 61
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('6'):	# page 0, block 6
 				command = 62
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('7'):	# page 0, block 7
 				command = 63
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 		elif c == ord('7'):	# read block (T55xx)
 			command = 7
 			locx = 50
 			locy = 9
 			
-			# Create a sub-window for the tag type
-			sub_cornerX = 18
-			sub_cornerY = 13
-			sub_height = 9
-			sub_width = 25
-			subwin = curses.newwin(sub_height, sub_width, sub_cornerY, \
-				sub_cornerX)
-			subwin.box()	# put a box around the window
-			subwin.addstr(1,1, "(1) - Page 0, Block 1")
-			subwin.addstr(2,1, "(2) - Page 0, Block 2")
-			subwin.addstr(3,1, "(3) - Page 0, Block 3")
-			subwin.addstr(4,1, "(4) - Page 0, Block 4")
-			subwin.addstr(5,1, "(5) - Page 0, Block 5")
-			subwin.addstr(6,1, "(6) - Page 0, Block 6")
-			subwin.addstr(7,1, "(7) - Page 0, Block 7")
-			subwin.refresh()
+			# Define menu list
+			aMenu = [
+					"(1) - Page 0, Block 1", 
+					"(2) - Page 0, Block 2",
+					"(3) - Page 0, Block 3",
+					"(4) - Page 0, Block 4",
+					"(5) - Page 0, Block 5",
+					"(6) - Page 0, Block 6",
+					"(7) - Page 0, Block 7"
+					]
+			
+			# Instantiate a class of WindowMaker to draw
+			# menu window
+			subWindow = WindowMaker()
+			subWindow.showWindow(aMenu)
 
 			# This selection is for the tag type subwindow
 			# Note the that the screenData length is 9 characters,
@@ -356,45 +375,32 @@ def main():
 			if c == ord('1'):	# page 0, block 1
 				command = 64
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('2'):	# page 0, block 2
 				command = 65
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('3'):	# page 0, block 3
 				command = 66
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('4'):	# page 0, block 4
 				command = 67
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('5'):	# page 0, block 5
 				command = 68
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('6'):	# page 0, block 6
 				command = 69
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()
+				del subWindow
 			if c == ord('7'):	# page 0, block 7
 				command = 70
 				screenData = ""
-				del subwin
-				stdscr.touchwin()
-				stdscr.refresh()			
+				del subWindow
+				
 		elif c == ord('9'):
 			# Exit cleanly
 			getOut()
