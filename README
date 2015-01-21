@@ -111,3 +111,12 @@ exact requirements for card to auto read after powerup.
 1/21/2015
 Added a WindowMaker class that allowed me to delete several dozen lines
 of repititious code, and is much cleaner to use.
+
+Added WindowEntry class that for text entry - no I can change memory
+blocks with simple text entry with basic error checking.
+
+Tomorrow, add free running bar code reading and fix bounds checking
+on invalid menu entries.
+
+
+

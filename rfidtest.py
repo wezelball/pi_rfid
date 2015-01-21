@@ -26,6 +26,7 @@
 
 # pyserial
 import sys, os
+import string
 from serial import Serial
 import time
 import curses
@@ -148,6 +149,62 @@ class WindowMaker:
 		stdscr.touchwin()
 		stdscr.refresh()
 
+class WindowEntry:
+	"""
+	Draws a non-parametrtic window in the center of the screen that
+	allows the user to enter 1 memory block of data, which is an 8-digit
+	ASCII hex string. Data is checked to verify validity.
+	
+	Class returns the actual data string, unlike the WindowMaker class.
+	"""
+	
+	def __init__(self):
+		global stdscr	# we need to get parent information from this
+		self.menu = []
+		self.__cornerX = 0
+		self.__cornerY = 0
+		self.__height = 3		# 1 line + 2 for box border
+		self.__width = 10		# 8 characters + 2 for box border
+		self.__charYX = [1,1]	# list defines character position
+		self.__stringLen = 8	# length of string
+		self.result = ''				# the returned string
+
+	def showWindow(self):
+		# Calculate corner X and Y to place box in center
+		# of screen
+		self.__parentHeight = stdscr.getmaxyx()[0]
+		self.__parentWidth = stdscr.getmaxyx()[1]
+		self.__cornerX = (self.__parentWidth - self.__width)/2
+		self.__cornerY = (self.__parentHeight - self.__height)/2
+		# Draw the window
+		self.__subwin = curses.newwin(self.__height, self.__width, \
+			self.__cornerY, self.__cornerX)
+		self.__subwin.box()
+		self.__subwin.refresh()
+		
+	def getText(self):
+		# Iterate through string, starting from leftmost character
+		for __x in range(0, self.__stringLen):
+			# move cursor to position and get character
+			self.__c = self.__subwin.getch(self.__charYX[0],self.__charYX[1])
+			# test to see if character is valid
+			if chr(self.__c) in string.hexdigits:
+				logging.debug("valid hex digit entered")
+				self.result += chr(self.__c)
+				self.__subwin.addch(self.__charYX[0],self.__charYX[1],self.__c)
+				self.__charYX[1] += 1
+				logging.debug("result string: %s", self.result)
+		
+		# The string is finished by now, except for the \r
+		# cherry on top
+		self.result += '\r'
+		return self.result
+	
+	def __del__(self):
+		# refresh the main window
+		stdscr.touchwin()
+		stdscr.refresh()	
+
 def main():
 
 	initLogging('debug.log')
@@ -234,7 +291,6 @@ def main():
 				command = 51
 				readerActive = False
 				screenData = "inactive"
-						
 		elif c == ord('3'):	# set tag type, requires subwindow menu
 			locx = 50
 			locy = 5
@@ -279,17 +335,14 @@ def main():
 				command = 56
 				screenData = "EM4205   "
 				del subWindow
-				
 		elif c == ord('4'):	# locate transponder
 			command = 4
 			locx = 50
 			locy = 6
-			#screenData = ''
 		elif c == ord('5'):	# read standard data
 			command = 5
 			locx = 50
 			locy = 7
-			#screenData = ''
 		elif c == ord('6'):	# read block (T55xx)
 			command = 6
 			locx = 50
@@ -345,7 +398,7 @@ def main():
 				command = 63
 				screenData = ""
 				del subWindow
-		elif c == ord('7'):	# read block (T55xx)
+		elif c == ord('7'):	# write block (T55xx)
 			command = 7
 			locx = 50
 			locy = 9
@@ -372,6 +425,7 @@ def main():
 			# the data output areas are wiped clean.  This is a real
 			# ghetto way of doing this, and must be improved
 			c = stdscr.getch()
+			
 			if c == ord('1'):	# page 0, block 1
 				command = 64
 				screenData = ""
@@ -401,6 +455,14 @@ def main():
 				screenData = ""
 				del subWindow
 				
+			# Instantiate a class which allows entering the 8-digit
+			# hex value for writing to memory blocks
+			dataWindow = WindowEntry()
+			# Draw the data window
+			dataWindow.showWindow()
+			# Custom data for writing block
+			blockData = dataWindow.getText()
+			del dataWindow
 		elif c == ord('9'):
 			# Exit cleanly
 			getOut()
@@ -408,7 +470,7 @@ def main():
 		# Send command to reader - I had to fudge this up to make
 		# parameteric commands work
 		if (command >= 64) and (command <= 70) : # parametric command - fixme
-			outStr = options[command] + "31415927\r"
+			outStr = options[command] + blockData
 		else:
 			outStr = options[command]
 		# There is a short pause, print WAIT on screen
