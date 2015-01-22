@@ -105,12 +105,12 @@ class WindowMaker:
 	def __init__(self):
 		global stdscr	# we need to get parent information from this
 		self.menu = []
-		self.__cornerX = 0
-		self.__cornerY = 0
-		self.__height = 0
-		self.__width = 0
+		self.__cornerX = 0	# window upper left corner X coords
+		self.__cornerY = 0	# window upper left corner Y coords
+		self.__height = 0	# window height
+		self.__width = 0	# window width
 		self.__maxLen = 0
-		self.__loop = 1
+		self.__loop = 1		# a loop variable
 
 	def showWindow(self,menu):
 		self.__menu = menu
@@ -161,13 +161,13 @@ class WindowEntry:
 	def __init__(self):
 		global stdscr	# we need to get parent information from this
 		self.menu = []
-		self.__cornerX = 0
-		self.__cornerY = 0
+		self.__cornerX = 0		# window upper left corner X coords
+		self.__cornerY = 0		# window upper left corner Y coords
 		self.__height = 3		# 1 line + 2 for box border
 		self.__width = 10		# 8 characters + 2 for box border
 		self.__charYX = [1,1]	# list defines character position
 		self.__stringLen = 8	# length of string
-		self.result = ''				# the returned string
+		self.result = ''		# the returned string
 
 	def showWindow(self):
 		# Calculate corner X and Y to place box in center
@@ -205,6 +205,49 @@ class WindowEntry:
 		stdscr.touchwin()
 		stdscr.refresh()	
 
+class WindowMonitor:
+	"""
+	Creates a window that monitors the serial port. RFID data is printed
+	out - data over a certin time limit changes color to show its 
+	age. Pressing a ? key ends the class
+	"""
+	def __init__(self):
+		global stdscr
+		self.__cornerX = 0		# window upper left corner X coords
+		self.__cornerY = 0		# window upper left corner Y coords
+		self.__height = 3		# 1 line + 2 for box border
+		self.__width = 64		# max 7 blocks of 8 chars. + 6 spaces
+								# + 2 for border = 64
+		self.__tagData = ''		# data from serial port
+		self.__clearString = ' ' * (self.__width - 2)
+	
+	def showWindow(self):
+		# Calculate corner X and Y to place box in center
+		# of screen
+		self.__parentHeight = stdscr.getmaxyx()[0]
+		self.__parentWidth = stdscr.getmaxyx()[1]
+		self.__cornerX = (self.__parentWidth - self.__width)/2
+		self.__cornerY = (self.__parentHeight - self.__height)/2
+		# Draw the window
+		self.__subwin = curses.newwin(self.__height, self.__width, \
+			self.__cornerY, self.__cornerX)
+		self.__subwin.timeout(1000)	# getch blocking for x millis
+		
+		self.__subwin.box()
+		self.__subwin.refresh()
+		
+		while (self.__subwin.getch() == -1):
+			self.__tagData = serialPort.readline()
+			if self.__tagData <> '':
+				self.__subwin.addstr(1, 1, self.__clearString)
+			self.__subwin.addstr(1, 1, self.__tagData, curses.A_REVERSE)
+			self.__tagData = ''
+		
+	def __del__(self):
+		# refresh the main window
+		stdscr.touchwin()
+		stdscr.refresh()
+	
 def main():
 
 	initLogging('debug.log')
@@ -234,7 +277,8 @@ def main():
 	stdscr.addstr(8,0, "(6) Read block (T55xx)")
 	stdscr.addstr(9,0, "(7) Write block (T55xx)")
 	stdscr.addstr(10,0, "(8) Set max block (T55xx)")
-	stdscr.addstr(11,0, "(9) Exit program")
+	stdscr.addstr(11,0, "(9) Read RFID tags")
+	stdscr.addstr(12,0, "(q) Exit program")
 	
 	# The options dictionary contains a mapping of command numbers
 	# to commands.  Command number >= 50 are not user commands
@@ -243,6 +287,7 @@ def main():
 				1: "MOF\r",		# measure operating frequency
 				4: "LTG\r",		# locate transponder
 				5: "RSD\r",		# read standard data
+				9:	"",			# read RFID tags (no command string)
 				50: "SRA\r",	# set reader active
 				51: "SRD\r",	# set reader deactive
 				52: "ST0\r",	# EM4100 tag selecteced (volatile)
@@ -534,7 +579,15 @@ def main():
 				command = 78
 				screenData = ""
 				del subWindow
-		elif c == ord('9'):
+		elif c == ord('9'):		# read RFID tags (monitor port)
+			command = 9
+			locx = 50
+			locy = 11
+			screenData = "done"
+			subWindow = WindowMonitor()
+			subWindow.showWindow()
+			del subWindow
+		elif c == ord('q') or c == ord('Q'):	# quit
 			# Exit cleanly
 			getOut()
 			
