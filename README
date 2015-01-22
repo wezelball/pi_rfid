@@ -118,5 +118,7 @@ blocks with simple text entry with basic error checking.
 Tomorrow, add free running bar code reading and fix bounds checking
 on invalid menu entries.
 
-
+1/22/2015
+I can now set the maximum block size that the reader returns (which is
+based on the tag, not the reader).  This is a very good thing.
 

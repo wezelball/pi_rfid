@@ -233,7 +233,7 @@ def main():
 	stdscr.addstr(7,0, "(5) Read standard data")
 	stdscr.addstr(8,0, "(6) Read block (T55xx)")
 	stdscr.addstr(9,0, "(7) Write block (T55xx)")
-
+	stdscr.addstr(10,0, "(8) Set max block (T55xx)")
 	stdscr.addstr(11,0, "(9) Exit program")
 	
 	# The options dictionary contains a mapping of command numbers
@@ -264,6 +264,14 @@ def main():
 				68: "WB5",		# write block 5 (8 ASCII hex bytes)
 				69: "WB6",		# write block 6 (8 ASCII hex bytes)
 				70: "WB7",		# write block 7 (8 ASCII hex bytes)
+				71: "SM0\r",		# set max block 0 (config block)
+				72: "SM1\r",		# set max block 1 (data block 1)
+				73: "SM2\r",		# set max block 2 (data block 2)
+				74: "SM3\r",		# set max block 3 (data block 3)
+				75: "SM4\r",		# set max block 4 (data block 4)
+				76: "SM5\r",		# set max block 5 (data block 5)
+				77: "SM6\r",		# set max block 6 (data block 6)
+				78: "SM7\r",		# set max block 7 (data block 7)
 				}
 
 	while (True):
@@ -370,6 +378,7 @@ def main():
 			# the data output areas are wiped clean.  This is a real
 			# ghetto way of doing this, and must be improved
 			c = stdscr.getch()
+			
 			if c == ord('1'):	# page 0, block 1
 				command = 57
 				screenData = ""
@@ -463,6 +472,68 @@ def main():
 			# Custom data for writing block
 			blockData = dataWindow.getText()
 			del dataWindow
+		elif c == ord('8'):	# set max block
+			command = 8
+			locx = 50
+			locy = 10
+			screenData = ''
+			
+			# Define menu list
+			aMenu = [
+					"(1) - Config Block - page 0, block 0", 
+					"(2) - Data Block - page 0, block 1",
+					"(3) - Data Block - page 0, block 2",
+					"(4) - Data Block - page 0, block 3",
+					"(5) - Data Block - page 0, block 4",
+					"(6) - Data Block - page 0, block 5",
+					"(7) - Data Block - page 0, block 6",
+					"(8) - Data Block - page 0, block 7",
+					]
+					
+			# Instantiate a class of WindowMaker to draw
+			# menu window
+			subWindow = WindowMaker()
+			subWindow.showWindow(aMenu)
+
+			# This selection is for the tag type subwindow
+			# Note the that the screenData length is 9 characters,
+			# not including carriage return.  This is to insure that
+			# the data output areas are wiped clean.  This is a real
+			# ghetto way of doing this, and must be improved
+			c = stdscr.getch()
+			
+			if c == ord('1'):	# config - page 0, block 1
+				command = 71
+				screenData = ""
+				del subWindow
+			if c == ord('2'):	# data 1 - page 0, block 2
+				command = 72
+				screenData = ""
+				del subWindow
+			if c == ord('3'):	# data 2 - page 0, block 3
+				command = 73
+				screenData = ""
+				del subWindow
+			if c == ord('4'):	# data 3 - page 0, block 4
+				command = 74
+				screenData = ""
+				del subWindow
+			if c == ord('5'):	# data 4 - page 0, block 5
+				command = 75
+				screenData = ""
+				del subWindow
+			if c == ord('6'):	# data 5 - page 0, block 6
+				command = 76
+				screenData = ""
+				del subWindow
+			if c == ord('7'):	# data 6 - page 0, block 7
+				command = 77
+				screenData = ""
+				del subWindow
+			if c == ord('8'):	# data 6 - page 0, block 7
+				command = 78
+				screenData = ""
+				del subWindow
 		elif c == ord('9'):
 			# Exit cleanly
 			getOut()
@@ -499,12 +570,28 @@ def main():
 			screenData  = "absent"
 		elif command == 7 and inStr == "?2\r":
 			screenData  = "fail"
+		elif command >= 71 and command <= 78:
+			# The set max block command has an undocumented feature
+			# in that it returns what looks like the configuration
+			# block along with the reply (at least if success). To
+			# prevent garbage on screen, I will look for the reply
+			# in the string
+			if 'OK' in inStr:						
+				screenData  = "okay       "
+			elif "?1" in inStr:
+				screenData  = "absent     "
+			elif "?2" in inStr:
+				screenData  = "fail       "
+			elif "?3" in inStr:
+				screenData  = "not allowed"
 		
 		# What is actually being printed in the screen
 		if screenData == '':
 			stdscr.addstr(locy, locx, inStr, curses.A_REVERSE)
+			logging.debug("screenData is empty")
 		else:
 			stdscr.addstr(locy, locx, screenData, curses.A_REVERSE)
+			logging.debug("screenData is NOT empty")
 		# clear out WAIT status
 		stdscr.addstr(0, 50, "    ",)
 
