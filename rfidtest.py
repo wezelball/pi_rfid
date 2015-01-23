@@ -247,6 +247,19 @@ class WindowMonitor:
 		# refresh the main window
 		stdscr.touchwin()
 		stdscr.refresh()
+
+def clearField(x, y):
+	"""
+	Clears the line from y,x coodinates provided to end of screen,
+	so that data from last write operaiton is gone
+	"""
+	global stdscr	# Need to reference this global
+	# stdscr.getmaxyx()[1]
+	#stdscr.addstr(0, 50, "    ",)
+	numSpaces = stdscr.getmaxyx()[1] - x
+	spaceStr = " " * numSpaces
+	stdscr.addstr(y,x,spaceStr)
+	
 	
 def main():
 
@@ -261,6 +274,9 @@ def main():
 	inStr = ''	# data read from reader
 	readerActive = False	# state of RF field
 	
+	# Other variables scoped to main
+	entryFound = False	# True if entry is found in menu
+	
 	# Start with a clean toilet
 	serialPort.flushInput()
 	serialPort.flushOutput()
@@ -273,7 +289,7 @@ def main():
 	stdscr.addstr(4,0, "(2) Toggle reader status (active/inactive)")
 	stdscr.addstr(5,0, "(3) Select tag type")
 	stdscr.addstr(6,0, "(4) Locate transdponder tag")
-	stdscr.addstr(7,0, "(5) Read standard data")
+	stdscr.addstr(7,0, "(5) Read std data")
 	stdscr.addstr(8,0, "(6) Read block (T55xx)")
 	stdscr.addstr(9,0, "(7) Write block (T55xx)")
 	stdscr.addstr(10,0, "(8) Set max block (T55xx)")
@@ -319,7 +335,7 @@ def main():
 				78: "SM7\r",		# set max block 7 (data block 7)
 				}
 
-	# Data based on menu selections are based on a list of
+	# Data based on top menu selections are based on a list of
 	# tuples
 	# (character, command, locx, locy, screenData)
 	commandList = [
@@ -328,7 +344,7 @@ def main():
 				('2', 2, 50, 4, ''),	# set reader active/deactive		
 				('3', 3, 50, 5, ''),	# set tag type
 				('4', 4, 50, 6, ''),	# locate transponder
-				('5', 5, 50, 7, ''),	# read standard data
+				('5', 5, 18, 7, ''),	# read standard data
 				('6', 6, 50, 8, ''),	# read block (T55xx)
 				('7', 7, 50, 9, ''),	# write block (T55xx)
 				('8', 8, 50, 10, ''),	# set max block
@@ -337,16 +353,25 @@ def main():
 				]
 
 	while (True):
-		c = stdscr.getch() # read a single character, returns ASCII code
+		while (entryFound == False):
+			c = stdscr.getch() # read a single character, returns ASCII code
+			logging.debug("entered char: %d", c)
 
-		# Interate through commandList and determine command, locX,
-		# locY, screenData
-		for tupple in commandList:
-			if tupple[0] == chr(c):
-				command = tupple[1]
-				locx = tupple[2]
-				locy = tupple[3]
-				screenData = tupple[4]
+			# Interate through commandList and determine command, locX,
+			# locY, screenData
+			for tupple in commandList:
+				if tupple[0] == chr(c):
+					command = tupple[1]
+					locx = tupple[2]
+					locy = tupple[3]
+					screenData = tupple[4]
+					entryFound = True
+
+		entryFound = False
+
+		# Clear the screen area that will be written to for
+		# the command to follow
+		clearField(locx, locy)
 
 		# Convert ASCII code to string, and interpret it
 		# if/elif caluses evaluate submenu commands only
@@ -403,9 +428,9 @@ def main():
 				screenData = "EM4205   "
 				del subWindow
 		elif c == ord('6'):	# read block (T55xx)
-			command = 6
-			locx = 50
-			locy = 8
+			#command = 6
+			#locx = 50
+			#locy = 8
 			
 			# Define menu list
 			aMenu = [

@@ -122,3 +122,52 @@ on invalid menu entries.
 I can now set the maximum block size that the reader returns (which is
 based on the tag, not the reader).  This is a very good thing.
 
+1/23/2015
+Made some small bugs fixes and nice refactoring.  At this point, I am
+declaring pi_rfid complete.  The program is usable and stable enough to
+do it's job, and I now understand what it takes to read/write RFID. I
+have already configured my set of 15 transponders with unique ID data.
+At this point, it's time to add the C version to 140008_agv.
+
+In a nutshell, the follwoing should happen:
+
+INITIALIZATION
+1. Flush the serial port/buffer.
+2. Try to read firmware version number - if unexpected data, repeat for
+a retry count number of times until diabling autonomous and calling it
+quits.
+3. On success, set transponder type to T55xx
+4. Enable RF field (or do I really need to - may come enabled by default)
+5. Should I force user to present card to reader to prove operation?
+
+AUTO OPERATION
+1. Poll serial port until card read.
+2. Return value (procedure call or signal?) - try procedure call for now
+
+Should reader by polled periodically to determine if it is still alive?
+
+Should this live in it's own thread?
+
+Not really part of RFID, but the logging facility developed here is 
+AWESOME.  I need to implement an equivalent in C.
+
+Transponder Memory Layout
+Each block is 8 hexadecimal ASCII charcters
+
+Config Block - page 0, block 0 
+Data Block - page 0, block 1	<- this is the only block used for AGV
+Data Block - page 0, block 2
+Data Block - page 0, block 3
+Data Block - page 0, block 4
+Data Block - page 0, block 5
+Data Block - page 0, block 6
+Data Block - page 0, block 7
+
+To configure an RFID card:
+1. Set the maxblock value to 1 (SM1) - THIS IS DONE FOR EACH CARD
+2. Write card value to data block 1 in 1 single block of 
+eight ASCII hex values - i.e. '0000000A' DO NOT WRITE DATA DIRECTLY
+TO THE CONFIGURATION BLOCK (block 0), THAT COULD POSSIBLY BRICK A $3.00
+CARD! I also broke the maxblock command by doing that.  If for some
+reason this advice is ignored, writing '00000000' to the config. block
+"cleans" the card.
