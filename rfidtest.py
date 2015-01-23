@@ -319,23 +319,38 @@ def main():
 				78: "SM7\r",		# set max block 7 (data block 7)
 				}
 
+	# Data based on menu selections are based on a list of
+	# tuples
+	# (character, command, locx, locy, screenData)
+	commandList = [
+				('0', 0, 50, 2, ''),	# firmware version
+				('1', 1, 50, 3, ''),	# measure frequency
+				('2', 2, 50, 4, ''),	# set reader active/deactive		
+				('3', 3, 50, 5, ''),	# set tag type
+				('4', 4, 50, 6, ''),	# locate transponder
+				('5', 5, 50, 7, ''),	# read standard data
+				('6', 6, 50, 8, ''),	# read block (T55xx)
+				('7', 7, 50, 9, ''),	# write block (T55xx)
+				('8', 8, 50, 10, ''),	# set max block
+				('9', 9, 50, 11, 'done'),	# read RFID tags(monitor port)
+				('q', 0, 0, 0, ''),		# quit
+				]
+
 	while (True):
 		c = stdscr.getch() # read a single character, returns ASCII code
-		
+
+		# Interate through commandList and determine command, locX,
+		# locY, screenData
+		for tupple in commandList:
+			if tupple[0] == chr(c):
+				command = tupple[1]
+				locx = tupple[2]
+				locy = tupple[3]
+				screenData = tupple[4]
+
 		# Convert ASCII code to string, and interpret it
-		if c == ord('0'):	# firmware version
-			command = 0
-			locx = 50
-			locy = 2
-			screenData = ''
-		elif c == ord('1'):	# measure frequency
-			command = 1
-			locx = 50
-			locy = 3
-			screenData = ''
-		elif c == ord('2'):	# set reader active/deactive
-			locx = 50
-			locy = 4
+		# if/elif caluses evaluate submenu commands only
+		if c == ord('2'):	# set reader active/deactive
 			if readerActive == False:	# acticate
 				command = 50
 				readerActive = True
@@ -345,8 +360,6 @@ def main():
 				readerActive = False
 				screenData = "inactive"
 		elif c == ord('3'):	# set tag type, requires subwindow menu
-			locx = 50
-			locy = 5
 		
 			# Define menu list
 			aMenu = [
@@ -368,6 +381,7 @@ def main():
 			# the data output areas are wiped clean.  This is a real
 			# ghetto way of doing this, and must be improved
 			c = stdscr.getch()
+
 			if c == ord('1'):
 				command = 52
 				screenData = "EM4100   "
@@ -388,14 +402,6 @@ def main():
 				command = 56
 				screenData = "EM4205   "
 				del subWindow
-		elif c == ord('4'):	# locate transponder
-			command = 4
-			locx = 50
-			locy = 6
-		elif c == ord('5'):	# read standard data
-			command = 5
-			locx = 50
-			locy = 7
 		elif c == ord('6'):	# read block (T55xx)
 			command = 6
 			locx = 50
@@ -453,10 +459,6 @@ def main():
 				screenData = ""
 				del subWindow
 		elif c == ord('7'):	# write block (T55xx)
-			command = 7
-			locx = 50
-			locy = 9
-			
 			# Define menu list
 			aMenu = [
 					"(1) - Page 0, Block 1", 
@@ -518,11 +520,6 @@ def main():
 			blockData = dataWindow.getText()
 			del dataWindow
 		elif c == ord('8'):	# set max block
-			command = 8
-			locx = 50
-			locy = 10
-			screenData = ''
-			
 			# Define menu list
 			aMenu = [
 					"(1) - Config Block - page 0, block 0", 
@@ -579,11 +576,7 @@ def main():
 				command = 78
 				screenData = ""
 				del subWindow
-		elif c == ord('9'):		# read RFID tags (monitor port)
-			command = 9
-			locx = 50
-			locy = 11
-			screenData = "done"
+		elif c == ord('9'):	# read RFID tags (monitor port)
 			subWindow = WindowMonitor()
 			subWindow.showWindow()
 			del subWindow
@@ -641,10 +634,8 @@ def main():
 		# What is actually being printed in the screen
 		if screenData == '':
 			stdscr.addstr(locy, locx, inStr, curses.A_REVERSE)
-			logging.debug("screenData is empty")
 		else:
 			stdscr.addstr(locy, locx, screenData, curses.A_REVERSE)
-			logging.debug("screenData is NOT empty")
 		# clear out WAIT status
 		stdscr.addstr(0, 50, "    ",)
 
